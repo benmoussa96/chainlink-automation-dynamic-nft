@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/ghaieth/2.Work/dar-blockchain-test/contracts/WeatherNFT.sol": {
-      "lastModificationDate": 1670939952480,
-      "contentHash": "7946a49b94611a15acca69baaa9bd9f2",
+      "lastModificationDate": 1670942300658,
+      "contentHash": "59075a6f6aa7b61a7b6ef48b6e9a3994",
       "sourceName": "contracts/WeatherNFT.sol",
       "solcConfig": {
         "version": "0.8.9",
