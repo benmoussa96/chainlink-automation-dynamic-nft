@@ -25,8 +25,6 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     Counters.Counter private _tokenIdCounter;
 
     // IPFS URIs for the dynamic nft graphics/metadata.
-    // NOTE: These connect to my IPFS Companion node.
-    // You should upload the contents of the /ipfs folder to your own node for development.
     string[] emojiUrisIpfs = [
         "https://ipfs.io/ipfs/QmbMNrzU2qRnhRvDHmaChzfA6pq36QswYhzNFoqEWoEaMi?filename=slightly-smiling-face.json",
         "https://ipfs.io/ipfs/QmS3JPCBGtmhK3bsrroUt9c7oatQ4K1FKYwAf4VthdCNzd?filename=grinning-squinting-face.json",
@@ -45,7 +43,7 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
         // Mint the token
         _safeMint(to, tokenId);
 
-        // Default to a bull NFT
+        // Default to a slightly-smiling NFT
         string memory defaultUri = emojiUrisIpfs[0];
         _setTokenURI(tokenId, defaultUri);
 
