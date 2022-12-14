@@ -6,9 +6,14 @@ let Token, tokenContract;
 let TOKEN_ID_0, TOKEN_ID_1;
 
 before(async () => {
+    const updateInterval = 10;
+    const _link = '0x326C977E6efc84E512bB9C30f76E30c160eD06FB';
+    const _oracle = '0xB9756312523826A566e222a34793E414A81c88E1';
+
     [deployer, owner1] = await ethers.getSigners();
     Token = await ethers.getContractFactory("WeatherNFT");
-    tokenContract = await Token.deploy();
+    tokenContract = await Token.deploy(updateInterval, _link, _oracle, { gasLimit: 3000000 });
+
     TOKEN_ID_0 = 0;
     TOKEN_ID_1 = 1;
 });

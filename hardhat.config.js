@@ -22,11 +22,13 @@ module.exports = {
     },
     networks: {
         localhost: {
-            url: "http://127.0.0.1:7545"
+            url: "http://127.0.0.1:7545",
+            allowUnlimitedContractSize: true
         },
         goerli: {
             url: goerliNetworkEndpoint,
-            accounts: [accountPrivateKey]
+            accounts: [accountPrivateKey],
+            allowUnlimitedContractSize: true
         }
     }
 };

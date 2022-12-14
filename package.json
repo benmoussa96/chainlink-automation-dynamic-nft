@@ -8,7 +8,7 @@
     "test": "npx hardhat test",
     "node": "npx hardhat node",
     "deploy-localhost": "npx hardhat run --network localhost scripts/deploy.js",
-    "deploy-goerli": "npx hardhat run --network goerli scripts/deploy.ts"
+    "deploy-goerli": "npx hardhat run --network goerli scripts/deploy.js"
   },
   "repository": {
     "type": "git",
