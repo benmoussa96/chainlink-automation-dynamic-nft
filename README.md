@@ -9,8 +9,8 @@ The NFT changes it's metadata according to the weather.
 * Else we get a "slightly smiling" emoji 🙂
 
 The contract is deployed at: [0x04f5F947296E181Ea92a7cC5796a14a04A47e67f](https://goerli.etherscan.io/address/0x04f5F947296E181Ea92a7cC5796a14a04A47e67f) on the Goerli Testnet. This one is already funded with LINK Tokens.
-First of all, you can mint an NFT using the `safeMint(address to)` function. You can check that it's URI isset by  default to the "slightly smiling" emoji using the `tokenURI(uint256 tokenId)` function.
-Then, when you cal the `performUpkeep(bytes calldata)` function (with [] as parameter), the contract requests the weather data and uptates the URI of all the tokens. Call `tokenURI(uint256 tokenId)` again to verify that the URI has changed.
+* First of all, you can mint an NFT using the `safeMint(address to)` function. You can check that it's URI isset by  default to the "slightly smiling" emoji using the `tokenURI(uint256 tokenId)` function.
+* Then, when you cal the `performUpkeep(bytes calldata)` function (with [] as parameter), the contract requests the weather data and uptates the URI of all the tokens. Call `tokenURI(uint256 tokenId)` again to verify that the URI has changed.
 
 ### Built with
 
