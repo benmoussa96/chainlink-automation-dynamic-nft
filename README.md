@@ -4,7 +4,7 @@ Solidity smart contract for a dynamic NFT using the Ethereum Blockchain.
 ## Description
 
 The NFT changes it's metadata according to the weather.
-* If the temperature is over 20C, we get a "pensive" emoji 😔
+* If the temperature is under 10C, we get a "pensive" emoji 😔
 * If the temperature is over 20C, we get a "grinning squinting" emoji 😆
 * Else we get a "slightly smiling" emoji 🙂
 
@@ -50,7 +50,7 @@ The contract is deployed at: [0x04f5F947296E181Ea92a7cC5796a14a04A47e67f](https:
 
 ### Compiling and deploying new contract (optional)
 
-4. Create a secrets.json file at the root of theee project. The account that you supply must have test ETH on the Goerli Testnet:
+4. Create a `secrets.json` file at the root of theee project:
 
     ```
     {
@@ -60,15 +60,16 @@ The contract is deployed at: [0x04f5F947296E181Ea92a7cC5796a14a04A47e67f](https:
         accuweatherApiKey": "..."
     }
     ```
+> :warning: **The account that you supply must have test ETH and test LINK on the Goerli Testnet!**
 5. Compiling the contract:
 
     ```
-    npm  run compile
+    npm run compile
     ```
 6. Testing the contract:
 
     ```
-    npm run  test
+    npm run test
     ```
 7. Launching a hardhat node:
 
