@@ -6,14 +6,17 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 // Chainlink Imports
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
+
 // This import includes functions from both ./KeeperBase.sol and ./interfaces/KeeperCompatibleInterface.sol
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 
 // Dev imports
 import "hardhat/console.sol";
+import "./DateTime.sol";
 
 contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, KeeperCompatibleInterface, ChainlinkClient {
     using Chainlink for Chainlink.Request;
@@ -24,7 +27,13 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keep
     uint public /*immutable*/ interval;
     uint public lastTimestamp;
 
-    int256 public currentTemperature;
+    address private link;
+    uint256 private fee;
+    address private oracle;
+    bytes32 private jobId;
+    string private tunis_geoJson;
+
+    uint256 public currentTemperature;
 
     // IPFS URIs for the dynamic nft graphics/metadata.
     string[] emojiUrisIpfs = [
@@ -33,22 +42,29 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keep
         "https://ipfs.io/ipfs/QmQfXVuX3WCuQSW3n2tWk9gTXXQXrP9kvPY6PM7WZD9qKg?filename=pensive-face.json"
     ];
 
-    // event TokensUpdated (string message);
+    event TokensUpdated (uint index);
+    event AvgTemp(uint256 _result);
 
-    constructor(uint updateInterval, address _link, address _oracle) ERC721("WeatherNFT", "WTHRNFT") {
-        // This sets the keeper update interval.
+    constructor(uint updateInterval/*, address _link, address _oracle*/) ERC721("WeatherNFT", "WTHRNFT") {
+        // This sets the keeper update interval:
         interval = updateInterval;
         lastTimestamp = block.timestamp;
 
-        // This sets the link Token and Oracle for the weather feed
-        // For the Ethereum Goerli Testnet we have:
-        // LINK Token Address: 0x326C977E6efc84E512bB9C30f76E30c160eD06FB
-        // Operator Address: 0xB9756312523826A566e222a34793E414A81c88E1
-        setChainlinkToken(_link);
-        setChainlinkOracle(_oracle);
+        // This sets the paramaters for the Ethereum Goerli Testnet:
+        // LINK Token Address
+        link = 0x326C977E6efc84E512bB9C30f76E30c160eD06FB;
+        // 0.1 LINK
+        fee = 0.1 * 10 ** 18;
+        // Google Weather Oracle Address
+        oracle = 0x292D4Cc76c00D9682230fC712F6B1419eF88aC9b;
+        // Average Temperature jobId
+        jobId = 0x3137383932643664373132343463633038356463313634353861633633636437;
+        // GeoJson for Tunis converted to a string
+        tunis_geoJson = "{\"type\":\"FeatureCollection\",\"features\":[{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"coordinates\":[10.182577566706385,36.80262629471457],\"type\":\"Point\"}}]}";
 
-        // currentTemperature = getLatestTemperature();
-        currentTemperature = 0;
+        // This configures the Chainlink Client:
+        setChainlinkToken(link);
+        setChainlinkOracle(oracle);
     }
 
     function safeMint(address to) public onlyOwner {
@@ -69,69 +85,82 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keep
     function performUpkeep (bytes calldata /*performData*/) external override {
         // Revalidating the upkeep in the performUpkeep function is highly recommended
         if ((block.timestamp - lastTimestamp) > interval) {
-            lastTimestamp = block.timestamp;
-            // int latestTemperature = getLatestTemperature();
-            int latestTemperature = 0;
-
-            uint emojiIndex;
-
-            if (latestTemperature < 10 && currentTemperature >= 10) {
-                // updateAllTokenUris("pensive-face");
-                emojiIndex = 0;
-
-            } else if (latestTemperature > 20 && currentTemperature <= 20) {
-                // updateAllTokenUris("grinning-squinting-face");
-                emojiIndex = 1;
-
-            } else if (currentTemperature > 20 || currentTemperature < 10) {
-                // updateAllTokenUris("slightly-smiling-face");
-                emojiIndex = 0;
-
-            } else {
-                console.log("NOTHING TO UPDATE!");
-                currentTemperature = latestTemperature;
-                return;
-            }
-
-            for (uint i = 0; i < _tokenIdCounter.current(); i++) {
-                _setTokenURI(i, emojiUrisIpfs[emojiIndex]);
-            }
-
-            currentTemperature = latestTemperature;
+            requestAvgTemp();
         } else {
             console.log("UPKEEP INTERVAL IS STILL NOT UP!");
             return;
         }
     }
 
-    // function updateAllTokenUris(string memory emoji) internal {
-    //     if (compareStrings("slightly-smiling-face", emoji)) {
-    //         for (uint i = 0; i < _tokenIdCounter.current(); i++) {
-    //             _setTokenURI(i, emojiUrisIpfs[0]);
-    //         }
-    //     } else if (compareStrings("grinning-squinting-face", emoji)) {
-    //         for (uint i = 0; i < _tokenIdCounter.current(); i++) {
-    //             _setTokenURI(i, emojiUrisIpfs[1]);
-    //         }
-    //     } else if (compareStrings("pensive-face", emoji)) {
-    //         for (uint i = 0; i < _tokenIdCounter.current(); i++) {
-    //             _setTokenURI(i, emojiUrisIpfs[2]);
-    //         }
-    //     }
-
-    //     emit TokensUpdated(emoji);
-    // }
+    function requestAvgTemp() private {
+        Chainlink.Request memory req = buildChainlinkRequest(
+            jobId,
+            address(this),
+            this.fulfillAvgTemp.selector
+        );
+        req.add("geoJson", tunis_geoJson);
+        req.add("dateFrom", getDateString(lastTimestamp));
+        req.add("dateTo", getDateString(block.timestamp));
+        req.add("method", "AVG");
+        req.add("column", "temp");
+        req.add("units", "metric");
+        sendChainlinkRequest(req, fee);
+    }
     
-    // function compareStrings(string memory a, string memory b) internal pure returns (bool) {
-    //     return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
-    // }
+    function fulfillAvgTemp(
+        bytes32 _requestId,
+        uint256 _result
+    ) external recordChainlinkFulfillment(_requestId) {
+        updateAllTokenUris(_result);
+        emit AvgTemp(_result);
+    }
 
-    // function getLatestTemperature() public view returns (int256) {
-    //     // Implment fetching temperature here!
-        
-    //     return 0;
-    // }
-    
+    function updateAllTokenUris(uint256 _latestTemperature) internal {
+        lastTimestamp = block.timestamp;
+
+        uint emojiIndex;
+
+        if (_latestTemperature < 10 && currentTemperature >= 10) {
+            // updateAllTokenUris("pensive-face");
+            emojiIndex = 0;
+
+        } else if (_latestTemperature > 20 && currentTemperature <= 20) {
+            // updateAllTokenUris("grinning-squinting-face");
+            emojiIndex = 1;
+
+        } else if (currentTemperature > 20 || currentTemperature < 10) {
+            // updateAllTokenUris("slightly-smiling-face");
+            emojiIndex = 0;
+
+        } else {
+            console.log("NOTHING TO UPDATE!");
+            currentTemperature = _latestTemperature;
+            return;
+        }
+
+        for (uint i = 0; i < _tokenIdCounter.current(); i++) {
+            _setTokenURI(i, emojiUrisIpfs[emojiIndex]);
+        }
+
+        currentTemperature = _latestTemperature;
+        emit TokensUpdated(emojiIndex);
+    } 
+
+    // Utility functions
+    function getDateString(uint timestamp) private pure returns (string memory){
+        (uint256 _year, uint256 _month, uint256 _day) = DateTime.timestampToDate(timestamp);
+        return buildDateString(_year, _month, _day);
+    }
+
+    function buildDateString(uint256 _year, uint256 _month, uint256 _day) public pure returns (string memory){
+        string memory yearString = Strings.toString(_year);
+        string memory monthString = Strings.toString(_month);
+        string memory dayString = Strings.toString(_day);
+
+        string memory result = string(abi.encodePacked(yearString, " - ", monthString, " - ", dayString));
+
+        return result;
+    } 
 
     // The following functions are overrides required by Solidity.
     function _beforeTokenTransfer(
