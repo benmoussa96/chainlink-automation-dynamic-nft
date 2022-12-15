@@ -10,13 +10,11 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 // Chainlink Imports
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
-
 // This import includes functions from both ./KeeperBase.sol and ./interfaces/KeeperCompatibleInterface.sol
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 
 // Dev imports
 import "hardhat/console.sol";
-import "./DateTime.sol";
 
 contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, KeeperCompatibleInterface, ChainlinkClient {
     using Chainlink for Chainlink.Request;
@@ -31,9 +29,7 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keep
     uint256 private fee;
     address private oracle;
     bytes32 private jobId;
-    string private tunis_geoJson;
-
-    uint256 public currentTemperature;
+    string private tunisAccuweatherEndpoint;
 
     // IPFS URIs for the dynamic nft graphics/metadata.
     string[] emojiUrisIpfs = [
@@ -43,9 +39,9 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keep
     ];
 
     event TokensUpdated (uint index);
-    event AvgTemp(uint256 _result);
+    event newTemperatureFulfilled(bytes32 indexed requestId, uint256 temperature);
 
-    constructor(uint updateInterval/*, address _link, address _oracle*/) ERC721("WeatherNFT", "WTHRNFT") {
+    constructor(uint updateInterval, string memory _tunisAccuweatherEndpoint) ERC721("WeatherNFT", "WTHRNFT") {
         // This sets the keeper update interval:
         interval = updateInterval;
         lastTimestamp = block.timestamp;
@@ -53,14 +49,15 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keep
         // This sets the paramaters for the Ethereum Goerli Testnet:
         // LINK Token Address
         link = 0x326C977E6efc84E512bB9C30f76E30c160eD06FB;
-        // 0.1 LINK
+        // 0.1 LINK fee
         fee = 0.1 * 10 ** 18;
-        // Google Weather Oracle Address
-        oracle = 0x292D4Cc76c00D9682230fC712F6B1419eF88aC9b;
-        // Average Temperature jobId
-        jobId = 0x3137383932643664373132343463633038356463313634353861633633636437;
-        // GeoJson for Tunis converted to a string
-        tunis_geoJson = "{\"type\":\"FeatureCollection\",\"features\":[{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"coordinates\":[10.182577566706385,36.80262629471457],\"type\":\"Point\"}}]}";
+        // Testnet Oracle Address
+        oracle = 0xCC79157eb46F5624204f47AB42b3906cAA40eaB7;
+        // GET>uint256 jobId
+        jobId = "ca98366cc7314957b8c012c72f05aeeb";
+        // Endpoint for fetching weather data for Tunis
+        // http://dataservice.accuweather.com/currentconditions/v1/321398?apikey=5nmKA42A2WnKdchKvgK4aN5zOqBxWGGn
+        tunisAccuweatherEndpoint = _tunisAccuweatherEndpoint;
 
         // This configures the Chainlink Client:
         setChainlinkToken(link);
@@ -85,79 +82,78 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keep
     function performUpkeep (bytes calldata /*performData*/) external override {
         // Revalidating the upkeep in the performUpkeep function is highly recommended
         if ((block.timestamp - lastTimestamp) > interval) {
-            requestAvgTemp();
+            requestTemperatureData();
         } else {
             console.log("UPKEEP INTERVAL IS STILL NOT UP!");
             return;
         }
     }
 
-    function requestAvgTemp() private {
+    /**
+     * Create a Chainlink request to retrieve API response, find the target
+     * data, then multiply by 10 (to remove decimal places from data).
+     */
+    function requestTemperatureData() public returns (bytes32 requestId) {
         Chainlink.Request memory req = buildChainlinkRequest(
             jobId,
             address(this),
-            this.fulfillAvgTemp.selector
+            this.fulfillTemperatureData.selector
         );
-        req.add("geoJson", tunis_geoJson);
-        req.add("dateFrom", getDateString(lastTimestamp));
-        req.add("dateTo", getDateString(block.timestamp));
-        req.add("method", "AVG");
-        req.add("column", "temp");
-        req.add("units", "metric");
-        sendChainlinkRequest(req, fee);
-    }
-    
-    function fulfillAvgTemp(
-        bytes32 _requestId,
-        uint256 _result
-    ) external recordChainlinkFulfillment(_requestId) {
-        updateAllTokenUris(_result);
-        emit AvgTemp(_result);
+
+        // Set the URL to perform the GET request on
+        req.add("get", tunisAccuweatherEndpoint);
+
+        // Set the path to find the desired data in the API response, where the response format is:
+        // [ { "Temperature": { "Metric": { "Value": 26.1 } } } ]
+        req.add("path", "0,Temperature,Metric,Value"); // Chainlink nodes 1.0.0 and later support this format
+
+        // Multiply the result by 10 to remove decimals
+        req.addInt("times", 10);
+
+        // Sends the request
+        return sendChainlinkRequest(req, fee);
     }
 
-    function updateAllTokenUris(uint256 _latestTemperature) internal {
+    /**
+     * Receive the response in the form of uint256
+     */
+    function fulfillTemperatureData(
+        bytes32 _requestId,
+        uint256 _temperature
+    ) public recordChainlinkFulfillment(_requestId) {
+        // Update all the token URIs according to the temperature
+        updateAllTokenUris(_temperature);
+
+        emit newTemperatureFulfilled(_requestId, _temperature);
+    }
+
+    /**
+     * Update all the token URIs according to the latestt temperature
+     */
+    function updateAllTokenUris(uint256 _temperature) internal {
         lastTimestamp = block.timestamp;
 
         uint emojiIndex;
 
-        if (_latestTemperature < 10 && currentTemperature >= 10) {
+        if (_temperature < 100) {
             // Set the index to the "pensive-face" emoji.
             emojiIndex = 2;
-        } else if (_latestTemperature > 20 && currentTemperature <= 20) {
-            // Set the index to the "grinning-squinting-face".
+        } else if (_temperature > 200) {
+            // Set the index to the "grinning-squinting-face" emoji.
             emojiIndex = 1;
-        } else if (currentTemperature > 20 || currentTemperature < 10) {
-            // Set the index to the "slightly-smiling-face".
-            emojiIndex = 0;
         } else {
-            console.log("NOTHING TO UPDATE!");
-            currentTemperature = _latestTemperature;
-            return;
+            // Set the index to the "slightly-smiling-face" emoji.
+            emojiIndex = 0;
         }
 
+        // Loop over all tokens and update their URIs
+        // with the emoji at the new index
         for (uint i = 0; i < _tokenIdCounter.current(); i++) {
             _setTokenURI(i, emojiUrisIpfs[emojiIndex]);
         }
 
-        currentTemperature = _latestTemperature;
         emit TokensUpdated(emojiIndex);
-    } 
-
-    // Utility functions
-    function getDateString(uint timestamp) private pure returns (string memory){
-        (uint256 _year, uint256 _month, uint256 _day) = DateTime.timestampToDate(timestamp);
-        return buildDateString(_year, _month, _day);
     }
-
-    function buildDateString(uint256 _year, uint256 _month, uint256 _day) public pure returns (string memory){
-        string memory yearString = Strings.toString(_year);
-        string memory monthString = Strings.toString(_month);
-        string memory dayString = Strings.toString(_day);
-
-        string memory result = string(abi.encodePacked(yearString, " - ", monthString, " - ", dayString));
-
-        return result;
-    } 
 
     // The following functions are overrides required by Solidity.
     function _beforeTokenTransfer(

@@ -1,0 +1,14 @@
+GOERLI_NETWORK_ENDPOINT = 'https://eth-goerli.g.alchemy.com/v2/';
+
+KEEPER_UPDATE_INTERVAL = 10;
+
+TUNIS_LOCATION_KEY = '321398';
+
+ACCUWEATHER_CURRENT_CONDITIONS_ENDPOINT = 'http://dataservice.accuweather.com/currentconditions/v1/';
+
+module.exports = {
+    GOERLI_NETWORK_ENDPOINT,
+    KEEPER_UPDATE_INTERVAL,
+    TUNIS_LOCATION_KEY,
+    ACCUWEATHER_CURRENT_CONDITIONS_ENDPOINT
+};

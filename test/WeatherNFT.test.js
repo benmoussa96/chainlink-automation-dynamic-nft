@@ -1,6 +1,9 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
+const { accuweatherApiKey } = require('../secrets.json');
+const { KEEPER_UPDATE_INTERVAL, TUNIS_LOCATION_KEY, ACCUWEATHER_CURRENT_CONDITIONS_ENDPOINT } = require('../constants.js');
+
 let deployer, owner1;
 let Token, tokenContract;
 let TOKEN_ID_0, TOKEN_ID_1;
@@ -10,7 +13,11 @@ before(async () => {
 
     [deployer, owner1] = await ethers.getSigners();
     Token = await ethers.getContractFactory("WeatherNFT");
-    tokenContract = await Token.deploy(updateInterval, { gasLimit: 4000000 });
+    tokenContract = await Token.deploy(
+        KEEPER_UPDATE_INTERVAL,
+        ACCUWEATHER_CURRENT_CONDITIONS_ENDPOINT + TUNIS_LOCATION_KEY + '?apikey=' + accuweatherApiKey,
+        { gasLimit: 4000000 }
+    );
 
     TOKEN_ID_0 = 0;
     TOKEN_ID_1 = 1;

@@ -1,4 +1,5 @@
-const { mnemonic, accountPrivateKey, goerliNetworkEndpoint, alchemyApiKey } = require('./secrets.json');
+const { accountPrivateKey, alchemyApiKey } = require('./secrets.json');
+const { GOERLI_NETWORK_ENDPOINT } = require('./constants.js');
 
 require("@nomiclabs/hardhat-waffle");
 
@@ -22,13 +23,11 @@ module.exports = {
     },
     networks: {
         localhost: {
-            url: "http://127.0.0.1:7545",
-            allowUnlimitedContractSize: true
+            url: "http://127.0.0.1:7545"
         },
         goerli: {
-            url: goerliNetworkEndpoint,
-            accounts: [accountPrivateKey],
-            allowUnlimitedContractSize: true
+            url: GOERLI_NETWORK_ENDPOINT + alchemyApiKey,
+            accounts: [accountPrivateKey]
         }
     }
 };
