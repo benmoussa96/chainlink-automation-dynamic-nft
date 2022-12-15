@@ -81,4 +81,4 @@ The contract is deployed at: [0x04f5F947296E181Ea92a7cC5796a14a04A47e67f](https:
     ```
     npm run deploy-goerli
     ```
-9. Fund the contract with LINK Tokens and have fun!!
+9. **Fund the contract with LINK Tokens and have fun!!**
