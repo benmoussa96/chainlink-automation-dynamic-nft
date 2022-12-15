@@ -75,10 +75,18 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keep
         _setTokenURI(tokenId, defaultUri);
     }
 
+    /**
+     * Checks if the updateUpkeep interval has already passed or not
+     */
     function checkUpkeep(bytes calldata /*checkData*/) external view override returns(bool upkeepNeeded, bytes memory /*performData*/) {
         upkeepNeeded = (block.timestamp - lastTimestamp) > interval; 
     }
 
+    /**
+     * If the updateUpkeep interval has already passed
+     * we call the requestTemperature() function
+     * else we  don't do anything
+     */
     function performUpkeep (bytes calldata /*performData*/) external override {
         // Revalidating the upkeep in the performUpkeep function is highly recommended
         if ((block.timestamp - lastTimestamp) > interval) {
@@ -116,6 +124,7 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keep
 
     /**
      * Receive the response in the form of uint256
+     * and passes it to the  updateAllTokenUris() function
      */
     function fulfillTemperatureData(
         bytes32 _requestId,
