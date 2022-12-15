@@ -121,17 +121,14 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keep
         uint emojiIndex;
 
         if (_latestTemperature < 10 && currentTemperature >= 10) {
-            // updateAllTokenUris("pensive-face");
-            emojiIndex = 0;
-
+            // Set the index to the "pensive-face" emoji.
+            emojiIndex = 2;
         } else if (_latestTemperature > 20 && currentTemperature <= 20) {
-            // updateAllTokenUris("grinning-squinting-face");
+            // Set the index to the "grinning-squinting-face".
             emojiIndex = 1;
-
         } else if (currentTemperature > 20 || currentTemperature < 10) {
-            // updateAllTokenUris("slightly-smiling-face");
+            // Set the index to the "slightly-smiling-face".
             emojiIndex = 0;
-
         } else {
             console.log("NOTHING TO UPDATE!");
             currentTemperature = _latestTemperature;
