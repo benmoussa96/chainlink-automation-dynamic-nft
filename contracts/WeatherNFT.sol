@@ -56,7 +56,6 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keep
         // GET>uint256 jobId
         jobId = "ca98366cc7314957b8c012c72f05aeeb";
         // Endpoint for fetching weather data for Tunis
-        // http://dataservice.accuweather.com/currentconditions/v1/321398?apikey=5nmKA42A2WnKdchKvgK4aN5zOqBxWGGn
         tunisAccuweatherEndpoint = _tunisAccuweatherEndpoint;
 
         // This configures the Chainlink Client:
@@ -85,7 +84,7 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keep
     /**
      * If the updateUpkeep interval has already passed
      * we call the requestTemperature() function
-     * else we  don't do anything
+     * else we don't do anything
      */
     function performUpkeep (bytes calldata /*performData*/) external override {
         // Revalidating the upkeep in the performUpkeep function is highly recommended
@@ -137,7 +136,7 @@ contract WeatherNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keep
     }
 
     /**
-     * Update all the token URIs according to the latestt temperature
+     * Update all the token URIs according to the latest temperature
      */
     function updateAllTokenUris(uint256 _temperature) internal {
         lastTimestamp = block.timestamp;
