@@ -11,13 +11,14 @@ The NFT changes it's metadata according to the weather.
 The contract is deployed at: [0x04f5F947296E181Ea92a7cC5796a14a04A47e67f](https://goerli.etherscan.io/address/0x04f5F947296E181Ea92a7cC5796a14a04A47e67f) on the Goerli Testnet. This one is already funded with LINK Tokens.
 * First of all, you can mint an NFT using the `safeMint(address to)` function. You can check that it's URI is set by default to the "slightly smiling" emoji by calling the `tokenURI(uint256 tokenId)` function.
 * Then, when you call the `performUpkeep(bytes calldata)` function (with [] as parameter), the contract requests the weather data and uptates the URI of all the tokens. Use `tokenURI(uint256 tokenId)` again to verify that the URI has changed.
+* Our NFT Contract also implements the Keepers interface so that it is Keepers compatible. This means that it contains custom logic to allow Chainlink Automation to determine when to execute our smart contract functions.
 
 ### Built with
 
 * JavaScript
 * Solidity
 * Npm
-* Node.js
+* Node.js (14.0.0)
 * Hardhat
 * Ethers
 * Chainlink
