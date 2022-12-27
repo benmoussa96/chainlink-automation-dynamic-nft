@@ -1,5 +1,5 @@
 # Dar Blockchain Test
-Solidity smart contract for a dynamic NFT (ERC721) using the Ethereum Blockchain.
+Dynamic NFT (ERC721) smart contract created using Solidity, Chainlink and the Ethereum Blockchain.
 
 ## Description
 
