@@ -56,12 +56,12 @@ The contract is deployed at: [0x04f5F947296E181Ea92a7cC5796a14a04A47e67f](https:
 4. Create a `secrets.json` file at the root of theee project:
 > :warning: **The account that you supply must have test ETH and test LINK on the Goerli Testnet!**
 
-    ```
+    ```json
     {
         "mnemonic": "...",
         "accountPrivateKey": "...",
         "alchemyApiKey": "...",
-        accuweatherApiKey": "..."
+        "accuweatherApiKey": "..."
     }
     ```
 5. Compiling the contract:
