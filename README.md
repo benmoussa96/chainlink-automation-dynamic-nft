@@ -1,6 +1,6 @@
 # Chainlink Automation Dynamic Token
 
-Dynamic NFT (ERC721) smart contract created using Solidity, Chainlink and the Ethereum Blockchain.
+Dynamic NFT (ERC721) smart contract created using Ethereum, Solidity & Chainlink.
 
 ## Description
 
